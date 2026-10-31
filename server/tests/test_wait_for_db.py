@@ -66,3 +66,15 @@ def test_succeeds_after_transient_failures(monkeypatch):
     db.wait_for_db(max_attempts=5)
 
     assert engine.connect.call_count == 3
+
+
+def test_dsn_is_plain_string_with_encoded_password(monkeypatch):
+    """alembic calls config.set_main_option() with this value, which rejects non-str."""
+    monkeypatch.setenv("POSTGRES_PASSWORD", "p@ss:w/rd")
+
+    dsn = db._build_database_url()
+
+    assert isinstance(dsn, str)
+    assert "p%40ss%3Aw%2Frd" in dsn
+    assert dsn.endswith("@postgres:5432/mem0_app")
+

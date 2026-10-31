@@ -11,13 +11,14 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 logger = logging.getLogger("mem0.db")
 
 
-def _build_database_url() -> URL:
-    """Build the DSN as a URL object instead of string interpolation.
+def _build_database_url() -> str:
+    """Build the DSN as a percent-encoded string.
 
-    A password containing @ : / ? # or % would otherwise be parsed as URL
-    delimiters: "p@ss" turns postgres:5432 into the host and the connection fails
-    with a confusing "could not translate host name" error. URL.create()
-    percent-encodes each component.
+    Assembling it by f-string breaks as soon as the password contains @ : / ? #:
+    "p@ss" makes the parser treat the rest as host/port and the connection fails
+    with a confusing "could not translate host name". URL.create() encodes each
+    component, and render_as_string() keeps the result a plain string — alembic
+    calls config.set_main_option() with it, which rejects non-string values.
     """
     host = os.environ.get("POSTGRES_HOST", "postgres")
     port = os.environ.get("POSTGRES_PORT", "5432")
@@ -31,7 +32,7 @@ def _build_database_url() -> URL:
         host=host,
         port=int(port),
         database=db,
-    )
+    ).render_as_string(hide_password=False)
 
 
 # create_engine is lazy: no connection is opened until the first connect() call,
