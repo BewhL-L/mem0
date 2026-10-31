@@ -2,11 +2,12 @@ import asyncio
 import logging
 import os
 import time
+from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 
 import telemetry
 from auth import ADMIN_API_KEY, AUTH_DISABLED, JWT_SECRET, require_admin, verify_auth
-from db import SessionLocal
+from db import SessionLocal, db_target, wait_for_db
 from dotenv import load_dotenv
 from errors import (
     UpstreamError,
@@ -146,6 +147,18 @@ set_session_factory(SessionLocal)
 initialize_state(DEFAULT_CONFIG)
 
 
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    """Wait for the database before serving traffic.
+
+    The compose entrypoint already runs scripts/wait_for_db.py, but this covers
+    paths that skip it: plain `uvicorn main:app`, reload workers, ad-hoc containers.
+    """
+    logging.getLogger("mem0.app").info("database target: %s", db_target())
+    wait_for_db()
+    yield
+
+
 app = FastAPI(
     title="Mem0 REST APIs",
     description=(
@@ -156,6 +169,7 @@ app = FastAPI(
     ),
     version="1.0.0",
     redirect_slashes=False,
+    lifespan=_lifespan,
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

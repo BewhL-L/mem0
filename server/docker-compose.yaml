@@ -19,7 +19,7 @@ services:
       postgres:
         condition: service_healthy
     command: >
-      sh -c "rm -rf /app/packages && pip install -q --force-reinstall --no-deps mem0ai && alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+      sh -c "rm -rf /app/packages && pip install -q --force-reinstall --no-deps -i https://mirrors.aliyun.com/pypi/simple mem0ai && python scripts/wait_for_db.py && alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
@@ -34,6 +34,9 @@ services:
       image: pgvector/pgvector:pg17
       restart: unless-stopped
       shm_size: "128mb"
+      # Give PostgreSQL time for a clean shutdown: SIGKILL forces WAL crash recovery
+      # on the next start, and during that window the server refuses connections.
+      stop_grace_period: 30s
       networks:
         - mem0_network
       environment:
@@ -43,7 +46,8 @@ services:
         test: ["CMD-SHELL", "pg_isready -q -d postgres -U ${POSTGRES_USER:-postgres}"]
         interval: 5s
         timeout: 5s
-        retries: 5
+        retries: 10
+        start_period: 10s
       volumes:
         - postgres_db:/var/lib/postgresql/data
         - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
