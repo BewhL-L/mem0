@@ -1,0 +1,3 @@
+# Test-only dependencies — installed by server/dev.Dockerfile, never in production images.
+# Pinned on purpose: a floating `pip install pytest` changes behaviour between rebuilds.
+pytest==9.2.0

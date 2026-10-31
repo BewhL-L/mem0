@@ -10,6 +10,11 @@ ENV PATH="/root/.local/bin:$PATH"
 COPY server/requirements.txt .
 RUN pip install -r requirements.txt
 
+# Test-only dependencies. Kept in a separate file so the runtime image stays lean
+# and versions are pinned instead of floating with a bare `pip install pytest`.
+COPY server/requirements-dev.txt .
+RUN pip install -r requirements-dev.txt
+
 # Install mem0 in editable mode using Poetry
 WORKDIR /app/packages
 COPY pyproject.toml .
