@@ -2,6 +2,7 @@ name: mem0-dev
 
 services:
   mem0:
+    restart: unless-stopped
     build:
       context: ..
       dockerfile: server/dev.Dockerfile
@@ -31,7 +32,7 @@ services:
 
   postgres:
       image: pgvector/pgvector:pg17
-      restart: on-failure
+      restart: unless-stopped
       shm_size: "128mb"
       networks:
         - mem0_network
@@ -50,6 +51,7 @@ services:
         - "8432:5432"
 
   mem0-dashboard:
+    restart: unless-stopped
     build: ./dashboard
     ports:
       - "3000:3000"

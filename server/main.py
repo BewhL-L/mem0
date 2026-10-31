@@ -128,6 +128,9 @@ DEFAULT_CONFIG = {
             "user": POSTGRES_USER,
             "password": POSTGRES_PASSWORD,
             "collection_name": POSTGRES_COLLECTION_NAME,
+            "embedding_model_dims": int(os.environ.get("MEM0_VECTOR_STORE_DIMENSIONS", "1536")),
+            "minconn": 1,
+            "maxconn": 5,
         },
     },
     "llm": {

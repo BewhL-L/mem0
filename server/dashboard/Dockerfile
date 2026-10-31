@@ -1,4 +1,5 @@
 FROM node:20-alpine AS base
+RUN sed -i "s|https://dl-cdn.alpinelinux.org/alpine|https://mirrors.aliyun.com/alpine|g" /etc/apk/repositories
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
@@ -19,6 +20,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS=--max-old-space-size=4096
 # Placeholder values replaced at runtime by entrypoint.sh
 ENV NEXT_PUBLIC_API_URL=NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_INSTANCE_NAME=NEXT_PUBLIC_INSTANCE_NAME
@@ -31,6 +33,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS=--max-old-space-size=4096
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
