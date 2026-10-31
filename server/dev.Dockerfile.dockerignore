@@ -1,0 +1,9 @@
+# Build context filter for dev.Dockerfile (BuildKit reads <Dockerfile>.dockerignore).
+#
+# CLAUDE.md is a symlink to AGENTS.md created on Linux. Docker Desktop on Windows
+# reads the context through \\wsl.localhost and cannot follow those links, so the
+# build aborts with: failed to solve: invalid file request mem0/CLAUDE.md.
+# They are documentation aliases and are never needed inside the image.
+**/CLAUDE.md
+**/__pycache__
+**/*.pyc
