@@ -2,9 +2,10 @@ FROM python:3.12
 
 WORKDIR /app
 
-# Install Poetry
-RUN curl -sSL https://install.python-poetry.org | python3 -
-ENV PATH="/root/.local/bin:$PATH"
+# PyPI is not reachable from inside build containers on this network (TLS reset),
+# so every pip call goes through a mirror. Override with --build-arg if needed.
+ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple
+ENV PIP_INDEX_URL=${PIP_INDEX_URL}
 
 # Copy requirements first for better caching
 COPY server/requirements.txt .
@@ -15,7 +16,8 @@ RUN pip install -r requirements.txt
 COPY server/requirements-dev.txt .
 RUN pip install -r requirements-dev.txt
 
-# Install mem0 in editable mode using Poetry
+# Install mem0 in editable mode. pip only — the poetry CLI installed above was
+# never used, and its installer hangs on GitHub downloads in this network.
 WORKDIR /app/packages
 COPY pyproject.toml .
 COPY poetry.lock .
